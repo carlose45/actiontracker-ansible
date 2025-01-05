@@ -1,0 +1,31 @@
+- name: Cambiar el puerto SSH a 22000
+  hosts: all
+  become: yes  # Usa sudo
+  tasks:
+    - name: Realizar copia de seguridad del archivo sshd_config
+      copy:
+        src: /etc/ssh/sshd_config
+        dest: /etc/ssh/sshd_config.bak
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: Cambiar puerto SSH en sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Port '
+        line: 'Port 22000'
+        state: present
+
+    - name: Permitir el puerto SSH en el firewall
+      ansible.builtin.command: ufw allow 22000/tcp
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Bloquear el puerto SSH 22 en el firewall
+      ansible.builtin.command: ufw delete allow 22/tcp
+      ignore_errors: yes  # Evita fallos si el puerto ya está bloqueado
+
+    - name: Reiniciar el servicio SSH
+      service:
+        name: ssh
+        state: restarted
