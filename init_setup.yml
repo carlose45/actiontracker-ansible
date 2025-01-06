@@ -1,4 +1,4 @@
-- name: Crear el grupo sshlogin y el usuario operador
+- name: Configuraciones iniciales del servidor
   hosts: all
   become: yes
   tasks:
