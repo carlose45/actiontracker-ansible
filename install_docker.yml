@@ -1,0 +1,52 @@
+- name: Instalar Docker en servidores Ubuntu
+  hosts: all
+  become: yes
+  tasks:
+    - name: Actualizar el índice de paquetes APT
+      apt:
+        update_cache: yes
+
+    - name: Instalar paquetes necesarios para usar repositorios HTTPS
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+    - name: Añadir la clave GPG oficial de Docker
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Añadir el repositorio oficial de Docker
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Actualizar el índice de paquetes APT tras añadir el repositorio de Docker
+      apt:
+        update_cache: yes
+
+    - name: Instalar Docker CE, CLI y Containerd
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: latest
+
+    - name: Iniciar y habilitar Docker para que se inicie automáticamente al arrancar
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Añadir el usuario actual al grupo docker
+      user:
+        name: "{{ operador | default('ubuntu') }}"
+        groups: docker
+        append: yes
+        state: present
+      when: ansible_user is defined

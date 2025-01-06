@@ -1,0 +1,39 @@
+- name: Instalar y configurar Fail2Ban en los servidores
+  hosts: all
+  become: yes  # Necesitamos privilegios de superusuario
+  tasks:
+    
+    # 1. Instalar Fail2Ban
+    - name: Instalar Fail2Ban
+      apt:
+        name: fail2ban
+        state: present
+
+    # 2. Configurar /etc/fail2ban/jail.conf
+    - name: Configurar /etc/fail2ban/jail.conf
+      template:
+        src: jail.conf.j2
+        dest: /etc/fail2ban/jail.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reiniciar fail2ban
+
+    # 3. Configurar /etc/fail2ban/jail.d/sshd.conf
+    - name: Configurar /etc/fail2ban/jail.d/sshd.conf
+      template:
+        src: sshd.conf.j2
+        dest: /etc/fail2ban/jail.d/sshd.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reiniciar fail2ban
+
+  handlers:
+    - name: Reiniciar fail2ban
+      systemd:
+        name: fail2ban
+        state: restarted
+        enabled: yes

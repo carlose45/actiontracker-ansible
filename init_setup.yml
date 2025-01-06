@@ -1,0 +1,239 @@
+- name: Crear el grupo sshlogin y el usuario operador
+  hosts: all
+  become: yes
+  tasks:
+    - name: Actualizar la lista de paquetes disponibles
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Actualizar todos los paquetes
+      apt:
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+
+    - name: Descomentar y establecer DIR_MODE=0750
+      lineinfile:
+        path: /etc/adduser.conf
+        regexp: '^#?DIR_MODE='
+        line: 'DIR_MODE=0750'
+        state: present
+        backup: yes
+
+    - name: Crear el grupo sshlogin
+      group:
+        name: sshlogin
+        state: present
+
+    - name: Crear el usuario operador y agregarlo al grupo sshlogin
+      user:
+        name: operador
+        password: "{{ 'aCR2XNNaYD@F@Q44Qa627Fq8' | password_hash('sha512') }}"
+        state: present
+        shell: /bin/bash
+        groups: 
+          - sshlogin 
+          - sudo
+        append: yes
+
+    - name: Asegurar que la línea AllowGroups sshlogin esté en sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?AllowGroups'
+        line: 'AllowGroups sshlogin'
+        state: present
+        backup: yes
+
+    - name: Asegurar que la línea PermitRootLogin no esté en sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+
+    - name: Bloquear la cuenta root con el módulo user
+      tasks:
+        - name: Bloquear la cuenta root
+          user:
+            name: root
+            state: locked
+
+    - name: Cambiar puerto SSH en sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Port '
+        line: 'Port 22000'
+        state: present
+
+    - name: Permitir el puerto SSH en el firewall
+      ansible.builtin.command: ufw allow 22000/tcp
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Bloquear el puerto SSH 22 en el firewall
+      ansible.builtin.command: ufw delete allow 22/tcp
+      ignore_errors: yes
+
+    - name: Reiniciar el servicio SSH
+      service:
+        name: ssh
+        state: restarted
+      
+    - name: Habilitar el servicio UFW
+      ufw:
+        state: enabled
+        enabled: yes
+
+    - name: Configurar net.ipv6.conf.all.disable_ipv6
+      sysctl:
+        name: net.ipv6.conf.all.disable_ipv6
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Configurar kernel.panic
+      sysctl:
+        name: kernel.panic
+        value: "10"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.conf.all.rp_filter
+      sysctl:
+        name: net.ipv4.conf.all.rp_filter
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.conf.default.rp_filter
+      sysctl:
+        name: net.ipv4.conf.default.rp_filter
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.icmp_echo_ignore_broadcasts
+      sysctl:
+        name: net.ipv4.icmp_echo_ignore_broadcasts
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.conf.all.accept_source_route
+      sysctl:
+        name: net.ipv4.conf.all.accept_source_route
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv6.conf.all.accept_source_route
+      sysctl:
+        name: net.ipv6.conf.all.accept_source_route
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.conf.default.accept_source_route
+      sysctl:
+        name: net.ipv4.conf.default.accept_source_route
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv6.conf.default.accept_source_route
+      sysctl:
+        name: net.ipv6.conf.default.accept_source_route
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.conf.all.send_redirects
+      sysctl:
+        name: net.ipv4.conf.all.send_redirects
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.conf.default.send_redirects
+      sysctl:
+        name: net.ipv4.conf.default.send_redirects
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.tcp_syncookies
+      sysctl:
+        name: net.ipv4.tcp_syncookies
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.tcp_max_syn_backlog
+      sysctl:
+        name: net.ipv4.tcp_max_syn_backlog
+        value: "2048"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.tcp_synack_retries
+      sysctl:
+        name: net.ipv4.tcp_synack_retries
+        value: "2"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.tcp_syn_retries
+      sysctl:
+        name: net.ipv4.tcp_syn_retries
+        value: "5"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.conf.all.log_martians
+      sysctl:
+        name: net.ipv4.conf.all.log_martians
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.icmp_ignore_bogus_error_responses
+      sysctl:
+        name: net.ipv4.icmp_ignore_bogus_error_responses
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.conf.all.accept_redirects
+      sysctl:
+        name: net.ipv4.conf.all.accept_redirects
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv6.conf.all.accept_redirects
+      sysctl:
+        name: net.ipv6.conf.all.accept_redirects
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.conf.default.accept_redirects
+      sysctl:
+        name: net.ipv4.conf.default.accept_redirects
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv6.conf.default.accept_redirects
+      sysctl:
+        name: net.ipv6.conf.default.accept_redirects
+        value: "0"
+        state: present
+        reload: yes
+
+    - name: Configurar net.ipv4.icmp_echo_ignore_all
+      sysctl:
+        name: net.ipv4.icmp_echo_ignore_all
+        value: "1"
+        state: present
+        reload: yes

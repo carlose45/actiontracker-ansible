@@ -1,0 +1,50 @@
+- name: Instalar Helm y configurar Rancher
+  hosts: all
+  become: yes
+  vars:
+    rancher_hostname: "vmi2381341.contaboserver.net"
+    rancher_proxy: "http://vmi2381341.contaboserver.net"
+    rancher_no_proxy: "127.0.0.0/8,10.0.0.0/8,cattle-system.svc,172.16.0.0/12,192.168.0.0/16,.svc,.cluster.local"
+    cert_manager_version: "v1.16.2"
+
+  tasks:
+    - name: Instalar dependencias necesarias
+      apt:
+        name: 
+          - curl
+          - bash
+        state: present
+        update_cache: yes
+
+    - name: Descargar e instalar Helm
+      shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      args:
+        executable: /bin/bash
+
+    - name: Agregar el repositorio de Jetstack
+      shell: helm repo add jetstack https://charts.jetstack.io
+      register: helm_repo_jetstack
+      changed_when: "'already exists' not in helm_repo_jetstack.stdout"
+
+    - name: Actualizar repositorios de Helm
+      shell: helm repo update
+
+    - name: Instalar cert-manager con Helm
+      shell: helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version {{ cert_manager_version }} --set crds.enabled=true
+      args:
+        executable: /bin/bash
+
+    - name: Agregar el repositorio de Rancher
+      shell: helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+      register: helm_repo_rancher
+      changed_when: "'already exists' not in helm_repo_rancher.stdout"
+
+    - name: Crear el namespace cattle-system
+      shell: kubectl create namespace cattle-system
+      register: kubectl_ns_cattle_system
+      changed_when: "'already exists' not in kubectl_ns_cattle_system.stdout"
+
+    - name: Instalar o actualizar Rancher con Helm
+      shell: helm upgrade --install rancher rancher-latest/rancher --namespace cattle-system --set hostname={{ rancher_hostname }} --set proxy={{ rancher_proxy }} --set noProxy={{ rancher_no_proxy }}
+      args:
+        executable: /bin/bash

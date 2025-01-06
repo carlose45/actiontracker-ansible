@@ -1,0 +1,38 @@
+- name: Instalar herramientas de seguridad (rkhunter y chkrootkit)
+  hosts: all
+  become: yes
+  tasks:
+    - name: Actualizar la lista de paquetes
+      apt:
+        update_cache: yes
+
+    - name: Instalar rkhunter y chkrootkit
+      apt:
+        name:
+          - rkhunter
+          - chkrootkit
+        state: present
+
+    - name: Configurar rkhunter para ejecutar actualizaciones automáticas
+      lineinfile:
+        path: /etc/default/rkhunter
+        regexp: '^CRON_DAILY_RUN='
+        line: 'CRON_DAILY_RUN="yes"'
+        state: present
+
+    - name: Configurar rkhunter para enviar alertas por correo electrónico
+      lineinfile:
+        path: /etc/default/rkhunter
+        regexp: '^REPORT_EMAIL='
+        line: 'REPORT_EMAIL="tu_correo@ejemplo.com"'
+        state: present
+
+    - name: Actualizar las definiciones de rkhunter
+      command: rkhunter --update
+      args:
+        warn: false
+
+    - name: Inicializar la base de datos de rkhunter
+      command: rkhunter --propupd
+      args:
+        warn: false
