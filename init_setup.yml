@@ -52,12 +52,10 @@
         line: 'PermitRootLogin no'
         state: present
 
-    - name: Bloquear la cuenta root con el módulo user
-      tasks:
-        - name: Bloquear la cuenta root
-          user:
-            name: root
-            state: locked
+    - name: Bloquear la cuenta root
+      user:
+        name: root
+        password_lock: yes
 
     - name: Cambiar puerto SSH en sshd_config
       lineinfile:
@@ -82,7 +80,6 @@
     - name: Habilitar el servicio UFW
       ufw:
         state: enabled
-        enabled: yes
 
     - name: Configurar net.ipv6.conf.all.disable_ipv6
       sysctl:

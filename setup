@@ -1,5 +1,5 @@
 sudo apt update
 sudo apt install ansible -y
 ansible-playbook -i inventory.ini init_setup.yml
-ansible-playbook -i inventory.ini install_fail2ban.yml
-ansible-playbook -i inventory.ini install_security_tools.yml
+# ansible-playbook -i inventory.ini install_fail2ban.yml
+# ansible-playbook -i inventory.ini install_security_tools.yml
