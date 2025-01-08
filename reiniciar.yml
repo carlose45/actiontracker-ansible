@@ -1,0 +1,9 @@
+---
+- name: Reiniciar servidor
+  hosts: all  # O puedes especificar el nombre del servidor, por ejemplo: vmi2381341.contaboserver.net
+  become: yes  # Si necesitas privilegios de sudo para reiniciar el servidor
+  tasks:
+    - name: Reiniciar el servidor
+      reboot:
+        reboot_timeout: 600  # Tiempo máximo (en segundos) para esperar que el servidor se reinicie
+        test_command: whoami  # Comando para comprobar si el servidor está disponible tras el reinicio

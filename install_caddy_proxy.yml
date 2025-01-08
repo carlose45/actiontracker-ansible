@@ -1,0 +1,76 @@
+---
+- name: Instalar y configurar Caddy para balanceo de carga
+  hosts: proxy
+  become: yes
+  tasks:
+    - name: Habilitar puertos necesarios en el firewall (80, 443, 9345)
+      ufw:
+        rule: allow
+        name: "{{ item }}"
+        proto: tcp
+      with_items:
+        - '80'
+        - '443'
+        - '9345'
+      become: true
+
+    - name: Asegurarse de que las entradas de /etc/hosts estén presentes
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item }}"
+        create: yes
+      with_items:
+        - "{{ RKE2_MASTER001_IP }} {{ RKE2_MASTER001 }} master001"
+        - "{{ RKE2_MASTER002_IP }} {{ RKE2_MASTER002 }} master002"
+        - "{{ RKE2_MASTER003_IP }} {{ RKE2_MASTER003 }} master003"
+
+    - name: Instalar Caddy
+      apt:
+        name: caddy
+        state: present
+        update_cache: yes
+
+    - name: Crear el directorio de configuración de Caddy
+      file:
+        path: /etc/caddy
+        state: directory
+        mode: '0755'
+
+    - name: Crear el archivo Caddyfile
+      copy:
+        dest: /etc/caddy/Caddyfile
+        content: |
+          https://{{ LOAD_BALANCER }} {
+              reverse_proxy / https://{{ RKE2_MASTER001 }}:443 https://{{ RKE2_MASTER002 }}:443 https://{{ RKE2_MASTER003 }}:443
+              tls {{ TLS_EMAIL }}
+              log {
+                  output file /var/log/caddy/kre2.log
+              }
+          }
+          https://{{ LOAD_BALANCER }}:9345 {
+              reverse_proxy / https://{{ RKE2_MASTER001 }}:9345 https://{{ RKE2_MASTER002 }}:9345 https://{{ RKE2_MASTER003 }}:9345
+              tls {{ TLS_EMAIL }}
+              log {
+                  output file /var/log/caddy/rancher.log
+              }
+          }
+        mode: '0644'
+
+    - name: Verificar que Caddy está en funcionamiento
+      systemd:
+        name: caddy
+        state: started
+        enabled: yes
+
+    - name: Reiniciar Caddy para aplicar la configuración
+      systemd:
+        name: caddy
+        state: restarted
+
+    - name: Verificar el estado de Caddy
+      shell: "systemctl status caddy"
+      register: caddy_status
+
+    - name: Mostrar el estado de Caddy
+      debug:
+        msg: "{{ caddy_status.stdout }}"

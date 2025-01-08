@@ -1,6 +1,41 @@
-sudo apt update
-sudo apt install ansible -y
-ansible-playbook -i inventory.ini init_setup.yml
-reboot
-# ansible-playbook -i inventory.ini install_fail2ban.yml
-# ansible-playbook -i inventory.ini install_security_tools.yml
+#!/bin/bash
+
+#884gA3lHA9KKtRh
+#master001
+ssh root@vmi2381341.contaboserver.net
+#master002
+ssh root@vmi2379375.contaboserver.net
+#master003
+ssh root@vmi2160927.contaboserver.net
+#master004
+ssh root@vmi2104422.contaboserver.net
+
+ansible-playbook -i inventory_root.ini init_setup.yml -k
+
+#aCR2XNNaYD@F@Q44Qa627Fq8
+./copy-private-key.sh vmi2381341.contaboserver.net
+./copy-private-key.sh vmi2379375.contaboserver.net
+./copy-private-key.sh vmi2160927.contaboserver.net
+./copy-private-key.sh vmi2104422.contaboserver.net
+
+ansible-playbook -i inventory_oper.ini kubernetes/1-install_rke2.yml
+
+#ansible-playbook -i inventory_oper.ini kubernetes/2-install_rancher.yml --limit vmi2381341.contaboserver.net
+#ansible-playbook -i inventory_oper.ini kubernetes/3.yml --limit vmi2381341.contaboserver.net
+
+ssh -i keys/vmi2381341.contaboserver.net -p 22000 operador@vmi2381341.contaboserver.net
+
+#kubectl rollout restart deployment rancher -n cattle-system
+#sZ0NIFqAObK4PC1Xq4
+ssh root@vmi2379375.contaboserver.net
+ansible-playbook -i inventory_root.ini init_setup.yml -k --limit vmi2379375.contaboserver.net
+ansible-playbook -i inventory_oper.ini reiniciar.yml -k --limit vmi2379375.contaboserver.net
+ansible-playbook -i inventory_oper.ini kubernetes/replicate_token.yml
+ansible-playbook -i inventory_oper.ini kubernetes/1-install_rke2.yml --limit vmi2379375.contaboserver.net
+
+#aCR2XNNaYD@F@Q44Qa627Fq8
+./copy-private-key.sh vmi2379375.contaboserver.net
+
+ssh -i keys/vmi2379375.contaboserver.net -p 22000 operador@vmi2379375.contaboserver.net
+
+ufw show raw

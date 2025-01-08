@@ -1,5 +1,5 @@
 - name: Instalar y configurar RKE2
-  hosts: all
+  hosts: masters
   become: yes
   vars:
     kube_config_path: "/root/.kube/config"
@@ -17,6 +17,14 @@
       args:
         executable: /bin/bash
 
+    - name: Crear archivo de configuración para RKE2
+      copy:
+        dest: /etc/rancher/rke2/config.yaml
+        content: |
+          token: "{{ RANCHER_TOKEN }}"
+          server: "https:{{ LOAD_BALANCER }}:9345"
+      notify: restart rke2
+
     - name: Habilitar el servicio RKE2
       systemd:
         name: rke2-server
@@ -33,7 +41,7 @@
         state: directory
         owner: "{{ kube_user }}"
         group: "{{ kube_user }}"
-        mode: "0755"
+        mode: "0600"
 
     - name: Copiar el archivo de configuración de RKE2 a la carpeta del usuario
       copy:
@@ -51,4 +59,4 @@
         dest: /usr/local/bin/kubectl
         owner: root
         group: root
-        mode: "0600"        
+        mode: "0700"        

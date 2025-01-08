@@ -1,0 +1,42 @@
+- name: Obtener y guardar el token en un archivo local
+  become: yes
+  hosts: master001
+  tasks:
+    - name: Obtener token del servidor
+      command: cat /var/lib/rancher/rke2/server/node-token
+      register: server_token
+
+    - name: Guardar token en un archivo local
+      become: no
+      local_action: copy content="{{ server_token.stdout }}" dest=./node-token.txt
+
+- name: Leer token local y configurar clientes
+  become: yes
+  hosts: clients
+  tasks:
+    - name: Leer token desde archivo local
+      delegate_to: localhost
+      become: no
+      slurp:
+        src: ./node-token.txt
+      register: local_token_file
+
+    - name: Decodificar token
+      set_fact:
+        decoded_token: "{{ local_token_file.content | b64decode }}"
+
+    - name: Crear directorio de configuración RKE2
+      file:
+        path: /etc/rancher/rke2/
+        state: directory
+        mode: '0755'
+
+    - name: Crear archivo config.yaml con el token
+      copy:
+        dest: /etc/rancher/rke2/config.yaml
+        content: |
+          server: https://vmi2381341.contaboserver.net:9345
+          token: {{ decoded_token }}
+        owner: root
+        group: root
+        mode: '0644'

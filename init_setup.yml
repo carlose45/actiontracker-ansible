@@ -29,13 +29,53 @@
     - name: Crear el usuario operador y agregarlo al grupo sshlogin
       user:
         name: operador
-        password: "{{ 'aCR2XNNaYD@F@Q44Qa627Fq8' | password_hash('sha512') }}"
+        password: "{{ hostvars[inventory_hostname].operador_pwd | password_hash('sha512') }}"
         state: present
         shell: /bin/bash
         groups: 
           - sshlogin 
           - sudo
         append: yes
+
+    - name: Asegurarse de que el directorio .ssh existe para el usuario operador
+      file:
+        path: "/home/operador/.ssh"
+        state: directory
+        owner: operador
+        group: operador
+        mode: '0744'
+
+    - name: Generar la clave SSH para el usuario operador
+      openssh_keypair:
+        path: "/home/operador/.ssh/id_rsa"
+        type: rsa
+        size: 2048
+        owner: operador
+        group: operador
+        mode: '0600'
+
+    - name: Asegurarse de que el archivo id_rsa.pub tiene permisos adecuados
+      file:
+        path: "/home/operador/.ssh/id_rsa.pub"
+        owner: operador
+        group: operador
+        mode: '0744'
+
+    - name: Copiar la clave pública al archivo authorized_keys
+      copy:
+        src: "/home/operador/.ssh/id_rsa.pub"
+        dest: "/home/operador/.ssh/authorized_keys"
+        owner: operador
+        group: operador
+        mode: '0600'
+        remote_src: yes
+
+    - name: Permitir que el usuario operador ejecute sudo sin contraseña
+      lineinfile:
+        path: /etc/sudoers
+        regexp: '^operador'
+        line: 'operador ALL=(ALL) NOPASSWD: ALL'
+        validate: '/usr/sbin/visudo -cf %s'
 
     - name: Asegurar que la línea AllowGroups sshlogin esté en sshd_config
       lineinfile:

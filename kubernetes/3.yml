@@ -1,0 +1,54 @@
+---
+- name: Configuración de cert-manager y LetsEncrypt
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Asegurarse de que el paquete python3-pip está instalado
+      apt:  # Utiliza el gestor de paquetes adecuado para tu distribución (apt en este caso para Debian/Ubuntu)
+        name: python3-pip
+        state: present
+      when: ansible_facts.packages['python3-pip'] is not defined 
+      
+    - name: Instalar librería kubernetes con pip
+      pip:
+        name: kubernetes
+        state: present  # Asegura que el paquete esté instalado
+        executable: pip3  # Usa pip3 si estás utilizando Python 3
+
+    - name: Crear archivo issuer.yaml para Let's Encrypt
+      copy:
+        dest: "/tmp/issuer.yaml"
+        content: |
+          apiVersion: cert-manager.io/v1
+          kind: Issuer
+          metadata:
+            name: letsencrypt-prod
+            namespace: cert-manager
+          spec:
+            acme:
+              email: "your-email@example.com"  # Cambia esto por tu email
+              server: https://acme-v02.api.letsencrypt.org/directory
+              privateKeySecretRef:
+                name: letsencrypt-prod
+              solvers:
+              - http01:
+                  ingress:
+                    class: nginx
+
+    - name: Aplicar el Issuer de LetsEncrypt en Kubernetes
+      kubernetes.core.k8s:
+        kubeconfig: "/root/.kube/config"  # Cambia esto si es necesario
+        state: present
+        src: "/tmp/issuer.yaml"
+
+    - name: Verificar que el Issuer se ha creado correctamente
+      kubernetes.core.k8s_info:
+        kubeconfig: "/root/.kube/config"  # Cambia esto si es necesario
+        kind: Issuer
+        namespace: cert-manager
+      register: issuer_info
+
+    - name: Mostrar los detalles del Issuer
+      debug:
+        var: issuer_info.resources
