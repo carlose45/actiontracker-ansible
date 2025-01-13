@@ -1,0 +1,19 @@
+---
+- name: Leer el archivo node-token y guardarlo localmente
+  hosts: all
+  become: yes
+  tasks:
+    - name: Leer el archivo remoto node-token
+      slurp:
+        src: /var/lib/rancher/rke2/server/node-token
+      register: node_token
+
+    - name: Crear archivo de configuración local para RKE2
+      become: no
+      local_action: 
+        module: copy
+        dest: ../templates/rke2_config.yaml.j2
+        content: |
+          token: {{ node_token.content | b64decode }}
+          server: https://{{ LOAD_BALANCER }}:9345
+          tls-san: {{ LOAD_BALANCER }}

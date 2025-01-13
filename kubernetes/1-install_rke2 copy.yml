@@ -1,0 +1,69 @@
+- name: Instalar y configurar RKE2
+  hosts: masters
+  become: yes
+  vars:
+    kube_config_path: "/root/.kube/config"
+    kube_user: "root"
+
+  tasks:
+    - name: Actualizar y actualizar los paquetes del sistema
+      apt:
+        update_cache: yes
+        upgrade: dist
+        force_apt_get: yes
+
+    - name: Descargar e instalar RKE2
+      shell: curl -sfL https://get.rke2.io | sh -
+      args:
+        executable: /bin/bash
+
+    - name: Crear directorio para la configuración para RKE2
+      file:
+        path: "/etc/rancher/rke2"
+        state: directory
+        owner: "{{ kube_user }}"
+        group: "{{ kube_user }}"
+        mode: "0744"
+
+    - name: Crear archivo de configuración para RKE2
+      copy:
+        dest: /etc/rancher/rke2/config.yaml
+        content: |
+          token: "{{ RANCHER_TOKEN }}"
+          server: "https://{{ LOAD_BALANCER }}:9345"
+
+    - name: Habilitar el servicio RKE2
+      systemd:
+        name: rke2-server
+        enabled: yes
+
+    - name: Iniciar el servicio RKE2
+      systemd:
+        name: rke2-server
+        state: started
+
+    - name: Crear directorio para la configuración de Kubernetes
+      file:
+        path: "{{ kube_config_path | dirname }}"
+        state: directory
+        owner: "{{ kube_user }}"
+        group: "{{ kube_user }}"
+        mode: "0600"
+
+    - name: Copiar el archivo de configuración de RKE2 a la carpeta del usuario
+      copy:
+        remote_src: yes
+        src: /etc/rancher/rke2/rke2.yaml
+        dest: "{{ kube_config_path }}"
+        owner: "{{ kube_user }}"
+        group: "{{ kube_user }}"
+        mode: "0644"
+
+    - name: Instalar kubectl desde el binario de RKE2
+      copy:
+        remote_src: yes
+        src: /var/lib/rancher/rke2/bin/kubectl
+        dest: /usr/local/bin/kubectl
+        owner: root
+        group: root
+        mode: "0700"        

@@ -12,8 +12,26 @@ ssh root@vmi2104422.contaboserver.net
 
 ansible-playbook -i inventory_root.ini init_setup.yml -k
 
-#aCR2XNNaYD@F@Q44Qa627Fq8
+#PROXY
+ansible-playbook -i inventory_root.ini init_setup.yml -k --limit vmi2394791.contaboserver.net
+./copy-private-key.sh vmi2394791.contaboserver.net
+ssh -i keys/vmi2394791.contaboserver.net -p 22000 operador@vmi2394791.contaboserver.net
+ansible-playbook -i inventory_oper.ini install_caddy_proxy.yml --limit vmi2394791.contaboserver.net
+
+
+#MASTER001 (BORRADO)
+ansible-playbook -i inventory_root.ini init_setup.yml -k --limit vmi2381341.contaboserver.net
 ./copy-private-key.sh vmi2381341.contaboserver.net
+ssh -i keys/vmi2381341.contaboserver.net -p 22000 operador@vmi2381341.contaboserver.net
+ufw default deny incoming
+ufw default allow outgoing
+ufw logging low
+ansible-playbook -i inventory_oper.ini kubernetes/1-install_rke2.yml --limit vmi2381341.contaboserver.net
+ansible-playbook -i inventory_oper.ini kubernetes/get_token.yml  --limit vmi2381341.contaboserver.net
+ansible-playbook -i inventory_oper.ini kubernetes/put_token.yml  --limit vmi2381341.contaboserver.net
+
+#aCR2XNNaYD@F@Q44Qa627Fq8
+
 ./copy-private-key.sh vmi2379375.contaboserver.net
 ./copy-private-key.sh vmi2160927.contaboserver.net
 ./copy-private-key.sh vmi2104422.contaboserver.net
@@ -39,3 +57,73 @@ ansible-playbook -i inventory_oper.ini kubernetes/1-install_rke2.yml --limit vmi
 ssh -i keys/vmi2379375.contaboserver.net -p 22000 operador@vmi2379375.contaboserver.net
 
 ufw show raw
+
+
+#CONFIGURACION DEL WORKER001
+#aCR2XNNaYD@F@Q44Qa627Fq8
+ansible-playbook -i inventory_root.ini init_setup.yml -k --limit vmi2394804.contaboserver.net
+ansible-playbook -i inventory_oper.ini install_docker.yml --limit vmi2394804.contaboserver.net
+./copy-private-key.sh vmi2394804.contaboserver.net
+rsync -av -e "ssh -p 22000" MNGLOGIN-PROD-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+rsync -av -e "ssh -p 22000" MNG001-PRODADF-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+rsync -av -e "ssh -p 22000" INFLUX-PRODADF-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+
+
+tar -czvf INFLUX-PRODADF-2025-01-10.tgz INFLUX-PRODADF
+tar -czvf MNGGIS-PRODADF-2025-01-10.tgz MNGGIS-PRODADF
+tar -czvf pentaho9-0001-adf-2025-01-10.tgz pentaho9-0001-adf
+tar -czvf POSTGIS-PRODADF-2025-01-10.tgz POSTGIS-PRODADF
+tar -czvf POSTPEN-PRODADF-2025-01-10.tgz POSTPEN-PRODADF
+
+rsync -av -e "ssh -p 22000" MNGGIS-PRODADF-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+rsync -av -e "ssh -p 22000" pentaho9-0001-adf-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+rsync -av -e "ssh -p 22000" POSTGIS-PRODADF-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+rsync -av -e "ssh -p 22000" POSTPEN-PRODADF-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+
+tar -czvf INFLUX-PRODAPB-2025-01-10.tgz INFLUX-PRODAPB
+tar -czvf MNG001-PRODAPB-2025-01-10.tgz MNG001-PRODAPB
+tar -czvf MNGGIS-PRODAPB-2025-01-10.tgz MNGGIS-PRODAPB
+tar -czvf pentaho9-0001-APB-2025-01-10.tgz pentaho9-0001-APB
+tar -czvf POSTGIS-PRODAPB-2025-01-10.tgz POSTGIS-PRODAPB
+tar -czvf POSTPEN-PRODAPB-2025-01-10.tgz POSTPEN-PRODAPB
+4.7G    INFLUX-PRODAPB
+7.2G    MNG001-PRODAPB
+4.1G    MNGGIS-PRODAPB
+277M    pentaho9-0001-APB
+37G     POSTGIS-PRODAPB
+28G     POSTPEN-PRODAPB
+
+rsync -av -e "ssh -p 22000" pentaho_v20221215_1.tar operador@vmi2394804.contaboserver.net:/tmp
+
+#aCR2XNNaYD@F@Q44Qa627Fq8
+rsync -av -e "ssh -p 22000" INFLUX-PRODAPB-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+rsync -av -e "ssh -p 22000" MNG001-PRODAPB-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+rsync -av -e "ssh -p 22000" MNGGIS-PRODAPB-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+rsync -av -e "ssh -p 22000" pentaho9-0001-APB-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+rsync -av -e "ssh -p 22000" POSTGIS-PRODAPB-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+rsync -av -e "ssh -p 22000" POSTPEN-PRODAPB-2025-01-10.tgz operador@vmi2394804.contaboserver.net:/tmp
+1.4G    
+4.1G    
+1.7G    
+16M     pentaho9-0001-APB-2025-01-10.tgz
+
+
+
+docker network create \
+  --driver bridge \
+  --subnet=172.20.0.0/16 \
+  --gateway=172.20.0.1 \
+  db-prod-network
+
+docker network create \
+  --driver bridge \
+  --subnet=172.18.0.0/16 \
+  --gateway=172.18.0.1 \
+  db-prodadf-network
+
+docker network create \
+  --driver bridge \
+  --subnet=172.19.0.0/16 \
+  --gateway=172.19.0.1 \
+  db-prodapb-network
+

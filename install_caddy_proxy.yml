@@ -3,32 +3,64 @@
   hosts: proxy
   become: yes
   tasks:
-    - name: Habilitar puertos necesarios en el firewall (80, 443, 9345)
-      ufw:
-        rule: allow
-        name: "{{ item }}"
-        proto: tcp
-      with_items:
-        - '80'
-        - '443'
-        - '9345'
-      become: true
+#    - name: Habilitar puertos necesarios en el firewall (80, 443, 9345)
+#      ufw:
+#        rule: allow
+#        port: "{{ item }}"
+#        proto: tcp
+#      with_items:
+#        - '80'
+#        - '443'
+#        - '9345'
+#      become: true
 
-    - name: Asegurarse de que las entradas de /etc/hosts estén presentes
-      lineinfile:
-        path: /etc/hosts
-        line: "{{ item }}"
-        create: yes
-      with_items:
-        - "{{ RKE2_MASTER001_IP }} {{ RKE2_MASTER001 }} master001"
-        - "{{ RKE2_MASTER002_IP }} {{ RKE2_MASTER002 }} master002"
-        - "{{ RKE2_MASTER003_IP }} {{ RKE2_MASTER003 }} master003"
+#    - name: Asegurarse de que las entradas de /etc/hosts estén presentes
+#      lineinfile:
+#        path: /etc/hosts
+#        line: "{{ item }}"
+#        create: yes
+#      with_items:
+#        - "{{ RKE2_MASTER001_IP }} {{ RKE2_MASTER001 }} master001"
+#        - "{{ RKE2_MASTER002_IP }} {{ RKE2_MASTER002 }} master002"
+#        - "{{ RKE2_MASTER003_IP }} {{ RKE2_MASTER003 }} master003"
 
-    - name: Instalar Caddy
-      apt:
-        name: caddy
-        state: present
-        update_cache: yes
+#    - name: Instalar paquetes necesarios
+#      apt:
+#        name:
+#          - debian-keyring
+#          - debian-archive-keyring
+#          - apt-transport-https
+#          - curl
+#        state: present
+#        update_cache: yessudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+#curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+#curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+#sudo apt update
+#sudo apt install caddy
+
+#    - name: Descargar la clave GPG de Caddy
+#      get_url:
+#        url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
+#        dest: /tmp/caddy.gpg
+
+#    - name: Agregar la clave GPG de Caddy al sistema
+#      command: gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg /tmp/caddy.gpg
+#      args:
+#        creates: /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+
+#    - name: Configurar el repositorio de Caddy
+#      copy:
+#        content: "deb [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/debian any-version main\n"
+#        dest: /etc/apt/sources.list.d/caddy-stable.list
+
+#    - name: Actualizar la lista de paquetes
+#      apt:
+#        update_cache: yes
+
+#    - name: Instalar Caddy
+#      apt:
+#        name: caddy
+#        state: present
 
     - name: Crear el directorio de configuración de Caddy
       file:

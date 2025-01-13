@@ -1,0 +1,35 @@
+---
+- name: Copiar la plantilla rke2_config.yaml a la ubicación remota
+  hosts: all
+  become: yes
+  tasks:
+    - name: Crear el directorio /etc/rancher/rke2 si no existe
+      file:
+        path: /etc/rancher/rke2
+        state: directory
+        mode: '0755'
+
+    - name: Copiar la plantilla rke2_config.yaml a /etc/rancher/rke2/config.yaml
+      template:
+        src: ../templates/rke2_config.yaml.j2
+        dest: /etc/rancher/rke2/config.yaml
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Copiar la plantilla rancher-service.yaml a /root/rancher-service.yaml
+      template:
+        src: ../templates/rancher-service.yaml.j2
+        dest: /root/rancher-service.yaml
+        owner: root
+        group: root
+        mode: '0644'
+        
+    - name: Ejecutar kubectl apply
+      command: kubectl apply -f /root/rancher-service.yaml
+    
+    - name: Reiniciar el servicio rke2-server
+      systemd:
+        name: rke2-server
+        state: restarted
+        enabled: yes

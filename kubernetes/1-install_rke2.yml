@@ -1,5 +1,5 @@
 - name: Instalar y configurar RKE2
-  hosts: masters
+  hosts: all
   become: yes
   vars:
     kube_config_path: "/root/.kube/config"
@@ -16,14 +16,6 @@
       shell: curl -sfL https://get.rke2.io | sh -
       args:
         executable: /bin/bash
-
-    - name: Crear archivo de configuración para RKE2
-      copy:
-        dest: /etc/rancher/rke2/config.yaml
-        content: |
-          token: "{{ RANCHER_TOKEN }}"
-          server: "https:{{ LOAD_BALANCER }}:9345"
-      notify: restart rke2
 
     - name: Habilitar el servicio RKE2
       systemd:
@@ -60,3 +52,23 @@
         owner: root
         group: root
         mode: "0700"        
+
+#TRANSFERIR EL LIDERAZGO
+#Paso 3.1: Identifica el líder de etcd
+#ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/var/lib/rancher/rke2/server/tls/etcd/server-ca.crt --cert=/var/lib/rancher/rke2/server/tls/etcd/server-client.crt --key=/var/lib/rancher/rke2/server/tls/etcd/server-client.key endpoint status --write-out=table
+#Paso 3.2: Transfiere el liderazgo
+#ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/var/lib/rancher/rke2/server/tls/etcd/server-ca.crt --cert=/var/lib/rancher/rke2/server/tls/etcd/server-client.crt --key=/var/lib/rancher/rke2/server/tls/etcd/server-client.key member list
+#Toma nota del ID del miembro que será el nuevo líder, luego transfiere el liderazgo:
+#ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/var/lib/rancher/rke2/server/tls/etcd/server-ca.crt --cert=/var/lib/rancher/rke2/server/tls/etcd/server-client.crt --key=/var/lib/rancher/rke2/server/tls/etcd/server-client.key move-leader <new-leader-id>
+
+#Elimina el maestro inicial
+#kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+#kubectl drain vmi2381341.contaboserver.net --ignore-daemonsets --delete-emptydir-data
+#kubectl delete node <node-name>
+#kubectl delete node vmi2381341.contaboserver.net
+#sudo systemctl stop rke2-server
+#sudo /usr/local/bin/rke2-uninstall.sh
+#sudo rm -rf /var/lib/rancher/rke2
+#sudo rm -rf /etc/rancher/rke2
+#kubectl get nodes
+#kubectl get pods -n kube-system
