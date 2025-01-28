@@ -17,19 +17,24 @@
         group: root
         mode: '0644'
 
-    - name: Copiar la plantilla rancher-service.yaml a /root/rancher-service.yaml
-      template:
-        src: ../templates/rancher-service.yaml.j2
-        dest: /root/rancher-service.yaml
-        owner: root
-        group: root
-        mode: '0644'
-        
-    - name: Ejecutar kubectl apply
-      command: kubectl apply -f /root/rancher-service.yaml
+#    - name: Copiar la plantilla rancher-service.yaml a /root/rancher-service.yaml
+#      template:
+#        src: ../templates/rancher-service.yaml.j2
+#        dest: /root/rancher-service.yaml
+#        owner: root
+#        group: root
+#        mode: '0644'
+
+#    - name: Ejecutar kubectl apply
+#      command: kubectl apply -f /root/rancher-service.yaml
     
-    - name: Reiniciar el servicio rke2-server
-      systemd:
-        name: rke2-server
-        state: restarted
-        enabled: yes
+#    - name: Reiniciar el servicio rke2-server
+#      systemd:
+#        name: rke2-server
+#        state: restarted
+#        enabled: yes
+
+#    - name: Iniciar el servicio RKE2
+#      systemd:
+#        name: rke2-server
+#        state: started

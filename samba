@@ -1,0 +1,35 @@
+sudo apt update
+sudo apt install -y samba
+
+sudo nano /etc/samba/smb.conf
+
+[K8S-Share]
+path = /srv/smb-share
+browseable = yes
+writable = yes
+guest ok = no
+valid users = smbuser
+force user = geoserver
+force group = geoserver
+
+sudo mkdir -p /srv/smb-share
+sudo chmod -R 0777 /srv/smb-share
+
+sudo smbpasswd -a smbuser
+
+sudo systemctl restart smbd
+sudo systemctl enable smbd
+
+helm repo add csi-driver-smb https://raw.githubusercontent.com/kubernetes-csi/csi-driver-smb/master/charts
+helm repo update
+
+helm install csi-driver-smb csi-driver-smb/csi-driver-smb --namespace kube-system
+
+useradd -u 101010 -g geoserver geoserver
+groupadd -g 101010 geoserver
+
+
+usuario:
+admin
+contraseña:
+v8{sHJ!768GzCrq

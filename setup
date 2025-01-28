@@ -55,6 +55,7 @@ ansible-playbook -i inventory_oper.ini kubernetes/1-install_rke2.yml --limit vmi
 ./copy-private-key.sh vmi2379375.contaboserver.net
 
 ssh -i keys/vmi2379375.contaboserver.net -p 22000 operador@vmi2379375.contaboserver.net
+ssh -i keys/vmi2394804.contaboserver.net -p 22000 operador@vmi2394804.contaboserver.net
 
 ufw show raw
 

@@ -6,21 +6,53 @@
     kube_user: "root"
 
   tasks:
-    - name: Actualizar y actualizar los paquetes del sistema
-      apt:
-        update_cache: yes
-        upgrade: dist
-        force_apt_get: yes
+#    - name: Actualizar y actualizar los paquetes del sistema
+#      apt:
+#        update_cache: yes
+#        upgrade: dist
+#        force_apt_get: yes
 
-    - name: Descargar e instalar RKE2
-      shell: curl -sfL https://get.rke2.io | sh -
-      args:
-        executable: /bin/bash
+#    - name: Descargar e instalar RKE2
+#      shell: curl -sfL https://get.rke2.io | sh -
+#      args:
+#        executable: /bin/bash
 
-    - name: Habilitar el servicio RKE2
-      systemd:
-        name: rke2-server
-        enabled: yes
+#    - name: Habilitar el servicio RKE2
+#      systemd:
+#        name: rke2-server
+#        enabled: yes
+
+#    - name: Leer el archivo remoto node-token
+#      slurp:
+#        src: /var/lib/rancher/rke2/server/node-token
+#      register: node_token
+
+    - name: Crear archivo de configuración local para RKE2
+      become: no
+      local_action: 
+        module: copy
+        dest: ../templates/rke2_config.yaml.j2
+        content: |
+          token: {{ RANCHER_TOKEN }}
+          server: https://{{ LOAD_BALANCER }}:9345
+          tls-san:
+            - {{ hostvars[inventory_hostname].local_ip }}
+          node-ip: {{ hostvars[inventory_hostname].local_ip }}
+          disable-agent: true
+
+    - name: Crear el directorio /etc/rancher/rke2 si no existe
+      file:
+        path: /etc/rancher/rke2
+        state: directory
+        mode: '0755'
+
+    - name: Copiar la plantilla rke2_config.yaml a /etc/rancher/rke2/config.yaml
+      template:
+        src: ../templates/rke2_config.yaml.j2
+        dest: /etc/rancher/rke2/config.yaml
+        owner: root
+        group: root
+        mode: '0644'
 
     - name: Iniciar el servicio RKE2
       systemd:

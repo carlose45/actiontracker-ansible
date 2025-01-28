@@ -1,0 +1,63 @@
+- name: Configurar reglas UFW en servidores
+  hosts: all
+  become: yes
+  tasks:
+    - name: Permitir tráfico UFW en vmi2394791.contaboserver.net (207.180.231.70)
+      ansible.builtin.shell: |
+        sudo ufw allow from 207.180.195.61
+        sudo ufw allow from 207.180.209.19
+        sudo ufw allow from 167.86.75.122
+        sudo ufw allow from 167.86.75.155
+        sudo ufw allow to 207.180.195.61
+        sudo ufw allow to 207.180.209.19
+        sudo ufw allow to 167.86.75.122
+        sudo ufw allow to 167.86.75.155
+      when: ansible_host == "vmi2394791.contaboserver.net"
+
+    - name: Permitir tráfico UFW en vmi2379375.contaboserver.net (207.180.195.61)
+      ansible.builtin.shell: |
+        sudo ufw allow from 207.180.231.70
+        sudo ufw allow from 207.180.209.19
+        sudo ufw allow from 167.86.75.122
+        sudo ufw allow from 167.86.75.155
+        sudo ufw allow to 207.180.231.70
+        sudo ufw allow to 207.180.209.19
+        sudo ufw allow to 167.86.75.122
+        sudo ufw allow to 167.86.75.155
+      when: ansible_host == "vmi2379375.contaboserver.net"
+
+    - name: Permitir tráfico UFW en vmi2381341.contaboserver.net (207.180.209.19)
+      ansible.builtin.shell: |
+        sudo ufw allow from 207.180.231.70
+        sudo ufw allow from 207.180.195.61
+        sudo ufw allow from 167.86.75.122
+        sudo ufw allow from 167.86.75.155
+        sudo ufw allow to 207.180.231.70
+        sudo ufw allow to 207.180.195.61
+        sudo ufw allow to 167.86.75.122
+        sudo ufw allow to 167.86.75.155
+      when: ansible_host == "vmi2381341.contaboserver.net"
+
+    - name: Permitir tráfico UFW en vmi2104422.contaboserver.net (167.86.75.122)
+      ansible.builtin.shell: |
+        sudo ufw allow from 207.180.231.70
+        sudo ufw allow from 207.180.195.61
+        sudo ufw allow from 207.180.209.19
+        sudo ufw allow from 167.86.75.155
+        sudo ufw allow to 207.180.231.70
+        sudo ufw allow to 207.180.195.61
+        sudo ufw allow to 207.180.209.19
+        sudo ufw allow to 167.86.75.155
+      when: ansible_host == "vmi2104422.contaboserver.net"
+
+#    - name: Permitir tráfico UFW en vmi2104421.contaboserver.net (167.86.75.155)
+#      ansible.builtin.shell: |
+#        sudo ufw allow from 207.180.231.70
+#        sudo ufw allow from 207.180.195.61
+#        sudo ufw allow from 207.180.209.19
+#        sudo ufw allow from 167.86.75.122
+#        sudo ufw allow to 207.180.231.70
+#        sudo ufw allow to 207.180.195.61
+#        sudo ufw allow to 207.180.209.19
+#        sudo ufw allow to 167.86.75.122
+#      when: ansible_host == "vmi2104421.contaboserver.net"

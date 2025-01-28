@@ -16,4 +16,6 @@
         content: |
           token: {{ node_token.content | b64decode }}
           server: https://{{ LOAD_BALANCER }}:9345
-          tls-san: {{ LOAD_BALANCER }}
+          tls-san:
+            - {{ hostvars[inventory_hostname].local_ip }}
+          node-ip: {{ hostvars[inventory_hostname].local_ip }}
